@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="PersistGS keeps fully occluded objects in a 4D Gaussian Splatting reconstruction by estimating friction and initial velocity from the visible frames and simulating the hidden motion with a differentiable rigid-body simulator.">
+  <meta name="keywords" content="PersistGS, Gaussian Splatting, 4DGS, differentiable simulation, object permanence">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PersistGS: Differentiable Physics for Object Permanence in 4D Gaussian Splatting</title>
+  <link rel="canonical" href="https://adrian-ramlal.github.io/persistgs/">
+  <meta property="og:type" content="article">
+  <meta property="og:title" content="PersistGS: Differentiable Physics for Object Permanence in 4D Gaussian Splatting">
+  <meta property="og:description" content="Adrian Ramlal and John S. Zelek. CVPR 2026 Workshop on Generative 3D Reconstruction (Oral).">
+  <meta property="og:url" content="https://adrian-ramlal.github.io/persistgs/">
+  <meta property="og:image" content="https://adrian-ramlal.github.io/persistgs/static/images/og.jpg">
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro" rel="stylesheet">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="stylesheet" href="./static/css/page.css">
+  <link rel="icon" type="image/png" href="./static/images/favicon.png">
+  <script defer src="./static/js/page.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://adrian-ramlal.github.io/" aria-label="Adrian Ramlal's homepage">
+        <span class="icon"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></span>
+      </a>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">More Research</a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://adrian-ramlal.github.io/inverse-material/">Inverse Material Estimation</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">PersistGS: Differentiable Physics for Object Permanence in 4D Gaussian Splatting</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><a href="https://adrian-ramlal.github.io/">Adrian Ramlal</a>,</span>
+            <span class="author-block"><a href="https://uwaterloo.ca/systems-design-engineering/profile/jzelek">John S. Zelek</a></span>
+          </div>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">University of Waterloo</span>
+          </div>
+          <div class="is-size-5 publication-venue">CVPR 2026 Workshop on Generative 3D Reconstruction<span class="tag is-oral">Oral</span></div>
+          <div class="publication-note">Also presented at the ICRA 2026 Real2Sim/Sim2Real Workshop (non-archival)</div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <span class="link-block">
+                <a href="https://openaccess.thecvf.com/content/CVPR2026W/GenRecon3d/papers/Ramlal_PersistGS_Differentiable_Physics_for_Object_Permanence_in_4D_Gaussian_Splatting_CVPRW_2026_paper.pdf" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2606.03479" class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon"><i class="ai ai-arxiv"></i></span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="#BibTeX" class="button is-normal is-rounded is-dark">
+                  <span class="icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg></span>
+                  <span>BibTeX</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <div class="tl interpolation-panel" data-timeline data-interval="1100" style="--ratio: 560 / 564">
+        <div class="columns is-mobile is-variable is-2">
+          <div class="column">
+            <p class="tl-head">Without a physics prior</p>
+            <div class="tl-stack">
+              <img src="./static/images/tl-plain-1.webp" alt="Frame 1: the ball is visible above the occluder." class="on">
+              <img src="./static/images/tl-plain-2.webp" alt="Frame 2: the ball reaches the occluder.">
+              <img src="./static/images/tl-plain-3.webp" alt="Frame 3: the ball is lost behind the occluder.">
+              <img src="./static/images/tl-plain-4.webp" alt="Frame 4: the ball's Gaussians have drifted.">
+              <img src="./static/images/tl-plain-5.webp" alt="Frame 5: the ball re-emerges.">
+            </div>
+          </div>
+          <div class="column">
+            <p class="tl-head">PersistGS</p>
+            <div class="tl-stack">
+              <img src="./static/images/tl-physics-1.webp" alt="Frame 1: the ball is visible above the occluder." class="on">
+              <img src="./static/images/tl-physics-2.webp" alt="Frame 2: the ball reaches the occluder.">
+              <img src="./static/images/tl-physics-3.webp" alt="Frame 3: the ball follows the simulated trajectory behind the occluder.">
+              <img src="./static/images/tl-physics-4.webp" alt="Frame 4: the ball is still maintained behind the occluder.">
+              <img src="./static/images/tl-physics-5.webp" alt="Frame 5: the ball re-emerges.">
+            </div>
+          </div>
+        </div>
+        <div class="tl-bar">
+          <button class="button is-small is-rounded tl-play" type="button">Pause</button>
+          <div class="tl-track">
+            <div class="tl-band" data-from="1" data-to="3"></div>
+            <input class="slider is-fullwidth is-info" type="range" min="0" max="4" step="1" value="0" aria-label="Time step">
+            <div class="tl-labels">
+              <span data-at="0">visible</span>
+              <span data-at="2" data-hot="1">occluded</span>
+              <span data-at="4">re-emerged</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h2 class="subtitle has-text-centered" style="margin-top: 1.25rem">
+        A ball falls past an occluder (opaque, but drawn translucent here for visualization). Without a physics prior, its Gaussians receive no photometric gradients during occlusion and are lost. PersistGS keeps the object by placing its Gaussians along an SE(3) trajectory predicted from the frames before occlusion with differentiable rigid-body simulation.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>Dynamic 3D Gaussian Splatting (3DGS) methods reconstruct time-varying scenes from synchronized multi-camera video using photometric supervision. When a moving object becomes fully occluded from all training cameras, this supervision vanishes: the Gaussians representing it receive no gradient signal and degrade. Existing approaches to incomplete observations in neural reconstruction rely on learned generative priors that prioritize visual plausibility over physical correctness.</p>
+          <p>We propose PersistGS, a method that restores object permanence during occlusion by coupling differentiable rigid body simulation with 3D Gaussian Splatting. Our approach decomposes the scene into per-object Gaussians and collision meshes, estimates friction and velocity from the observed pre-occlusion trajectory via differentiable simulation, and uses the resulting SE(3) trajectory to position object Gaussians throughout the occlusion period. Because the predicted trajectory satisfies the governing equations of rigid body dynamics, it faithfully captures contact events (bounces, friction-based deceleration, direction changes) that kinematic extrapolation cannot model. We introduce a centroid silhouette loss that isolates positional gradients from appearance noise, yielding 40% lower trajectory error than photometric supervision. We evaluate using cameras withheld from training that observe the object during its occlusion. Experiments on synthetic scenes show that PersistGS outperforms constant velocity extrapolation by +2.46 dB PSNR and comes within 0.19 dB of a ground-truth trajectory upper bound.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Method</h2>
+    <div class="figure-block">
+      <img src="./static/images/pipeline.webp" width="1600" height="673" loading="lazy" alt="PersistGS pipeline: scene decomposition, physics estimation, and dynamic reconstruction.">
+      <p class="figure-caption">(a) Scene decomposition extracts per-object Gaussians and collision meshes with MV-SAM3D and trains the background Gaussians separately; all of them are then frozen. (b) Physics estimation simulates candidate parameters, friction μ and initial velocity v₀, in NVIDIA Newton, renders the alpha channel of the positioned object Gaussians, and minimizes a centroid silhouette loss. (c) Dynamic reconstruction moves the frozen object Gaussians along the estimated SE(3) trajectory and composites them with the background.</p>
+    </div>
+    <div class="content has-text-justified" style="margin-top: 1.5rem">
+      <p>The object is simulated as a rigid body in NVIDIA Newton, and Warp's tape-based automatic differentiation gives gradients through the whole trajectory, including contacts. Two changes to Newton's contact kernels make those gradients usable: a smooth friction model replaces a hard clamp that gave zero gradient once friction saturated, and material parameters are no longer averaged with the body's, which had routed only half of the gradient to them.</p>
+      <p>Instead of a pixel-wise photometric loss, PersistGS compares the centroid of the rendered silhouette with the centroid of the ground-truth mask. This separates the object's position, which physics decides, from its appearance, which is fixed from the frames before occlusion, and it gives friction gradients about 100 times larger. Estimation follows the order in which the parameters become observable: velocity from frames before contact, then friction from frames after contact, then both together, about 5.5 minutes per scene.</p>
+      <p>During occlusion, the object's Gaussians follow the simulated trajectory with no photometric supervision. When the object re-emerges, supervision resumes.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Results</h2>
+    <div class="content has-text-justified">
+      <p>The evaluation uses three synthetic scenes simulated in NVIDIA Newton, each with a rigid ball, a ground plane and an occluding wall, arranged so that contact happens while the ball is hidden: a ground bounce behind the occluder (ball_fall, 248 occluded frames), a hidden second bounce (ball_bounce, 80 frames) and a roll that slows under friction (ball_roll, 45 frames). Each scene has 5 training cameras and 2 evaluation cameras withheld from training, at 512×512 and 60 fps. Metrics use an object-region crop from the evaluation cameras during occlusion.</p>
+    </div>
+
+    <div class="chart">
+      <p class="chart-title">Mean PSNR during occlusion, three scenes</p>
+<svg viewBox="0 0 680 244" role="img" aria-labelledby="pg-chart-title pg-chart-desc" font-family="Noto Sans, Helvetica Neue, Arial, sans-serif" font-size="14">
+<title id="pg-chart-title">Mean PSNR during occlusion by method</title>
+<desc id="pg-chart-desc">PersistGS 17.15 dB, linear interpolation 15.74, constant velocity 14.69, no physics 12.01; ground-truth trajectory upper bound 17.34.</desc>
+<line x1="262.86" y1="38" x2="262.86" y2="204" stroke="#e1e0d9" stroke-width="1"/>
+<text x="262.86" y="222" text-anchor="middle" fill="#898781" font-size="12">12</text>
+<line x1="388.57" y1="38" x2="388.57" y2="204" stroke="#e1e0d9" stroke-width="1"/>
+<text x="388.57" y="222" text-anchor="middle" fill="#898781" font-size="12">14</text>
+<line x1="514.29" y1="38" x2="514.29" y2="204" stroke="#e1e0d9" stroke-width="1"/>
+<text x="514.29" y="222" text-anchor="middle" fill="#898781" font-size="12">16</text>
+<line x1="640.00" y1="38" x2="640.00" y2="204" stroke="#e1e0d9" stroke-width="1"/>
+<text x="640.00" y="222" text-anchor="middle" fill="#898781" font-size="12">18</text>
+<line x1="200" y1="204" x2="640" y2="204" stroke="#c3c2b7" stroke-width="1"/>
+<text x="420.0" y="240" text-anchor="middle" fill="#898781" font-size="12">PSNR (dB), higher is better</text>
+<line x1="598.51" y1="36" x2="598.51" y2="204" stroke="#52514e" stroke-width="1"/>
+<text x="602.51" y="30" text-anchor="end" fill="#52514e" font-size="12">Ground-truth trajectory (upper bound) 17.34</text>
+<line x1="200" y1="58" x2="640" y2="58" stroke="#f0efec" stroke-width="1"/>
+<text x="186" y="63" text-anchor="end" fill="#0b0b0b">No physics</text>
+<g class="pt" tabindex="0"><title>No physics: 12.01 dB</title><circle cx="263.49" cy="58" r="14" fill="transparent"/><circle class="mark" cx="263.49" cy="58" r="6.5" fill="#898781" stroke="#fff" stroke-width="2"/></g>
+<text x="250.49" y="63" text-anchor="end" fill="#52514e" font-size="13">12.01</text>
+<line x1="200" y1="98" x2="640" y2="98" stroke="#f0efec" stroke-width="1"/>
+<text x="186" y="103" text-anchor="end" fill="#0b0b0b">Constant velocity</text>
+<g class="pt" tabindex="0"><title>Constant velocity: 14.69 dB</title><circle cx="431.94" cy="98" r="14" fill="transparent"/><circle class="mark" cx="431.94" cy="98" r="6.5" fill="#898781" stroke="#fff" stroke-width="2"/></g>
+<text x="418.94" y="103" text-anchor="end" fill="#52514e" font-size="13">14.69</text>
+<line x1="200" y1="138" x2="640" y2="138" stroke="#f0efec" stroke-width="1"/>
+<text x="186" y="143" text-anchor="end" fill="#0b0b0b">Linear interpolation*</text>
+<g class="pt" tabindex="0"><title>Linear interpolation: 15.74 dB</title><circle cx="497.94" cy="138" r="14" fill="transparent"/><circle class="mark" cx="497.94" cy="138" r="6.5" fill="#898781" stroke="#fff" stroke-width="2"/></g>
+<text x="484.94" y="143" text-anchor="end" fill="#52514e" font-size="13">15.74</text>
+<line x1="200" y1="178" x2="640" y2="178" stroke="#f0efec" stroke-width="1"/>
+<text x="186" y="183" text-anchor="end" fill="#0b0b0b" font-weight="700">PersistGS</text>
+<g class="pt" tabindex="0"><title>PersistGS: 17.15 dB</title><circle cx="586.57" cy="178" r="14" fill="transparent"/><circle class="mark" cx="586.57" cy="178" r="6.5" fill="#2a78d6" stroke="#fff" stroke-width="2"/></g>
+<text x="573.57" y="183" text-anchor="end" fill="#52514e" font-size="13" font-weight="700">17.15</text>
+</svg>
+      <p class="figure-caption">PersistGS is 2.46 dB above constant-velocity extrapolation, the only causal kinematic baseline, and 0.19 dB below the ground-truth trajectory. *Linear interpolation needs the position where the ball re-emerges, so it cannot run causally; it is competitive only on ball_roll, where the hidden path is nearly straight.</p>
+    </div>
+
+    <h3 class="title is-4" style="margin-top: 2.5rem">Compare the methods</h3>
+    <div class="cmp" data-compare data-src="./static/images/q-{method}-{stage}.webp" data-method="persistgs" data-stage="trajectory">
+      <div class="buttons has-addons seg" data-group="method" role="group" aria-label="Method">
+        <button class="button is-small" type="button" aria-pressed="false" data-value="nophysics" data-label="No physics" data-note="Without physics, the ball is absent during occlusion.">No physics</button>
+        <button class="button is-small" type="button" aria-pressed="false" data-value="linear" data-label="Linear interpolation" data-note="Linear interpolation follows a straight path through the contact, and it needs the re-emergence position.">Linear interpolation</button>
+        <button class="button is-small" type="button" aria-pressed="false" data-value="constvel" data-label="Constant velocity" data-note="Constant velocity has no contact model, so it misses the second bounce.">Constant velocity</button>
+        <button class="button is-small" type="button" aria-pressed="true" data-value="persistgs" data-label="PersistGS" data-note="PersistGS follows the physics-predicted arc, including the hidden bounce.">PersistGS</button>
+      </div>
+      <div class="buttons has-addons seg" data-group="stage" role="group" aria-label="Moment">
+        <button class="button is-small" type="button" aria-pressed="false" data-value="onset">Occlusion onset</button>
+        <button class="button is-small" type="button" aria-pressed="false" data-value="mid">Mid-occlusion</button>
+        <button class="button is-small" type="button" aria-pressed="false" data-value="offset">Occlusion offset</button>
+        <button class="button is-small" type="button" aria-pressed="true" data-value="trajectory">Scene trajectory</button>
+      </div>
+      <div class="columns is-mobile cmp-view">
+        <div class="column"><div class="frame2"><img data-slot="gt" src="./static/images/q-gt-trajectory.webp" width="520" height="520" alt="Ground truth, scene trajectory"></div><p>Ground truth</p></div>
+        <div class="column"><div class="frame2"><img data-slot="method" src="./static/images/q-persistgs-trajectory.webp" width="520" height="520" alt="PersistGS, scene trajectory"></div><p data-method-label>PersistGS</p></div>
+      </div>
+      <p class="cmp-note" data-note-out>PersistGS follows the physics-predicted arc, including the hidden bounce.</p>
+      <p class="figure-caption has-text-centered">ball_bounce, rendered from an evaluation camera that sees past the occluder. Green dotted outlines mark the ground-truth ball position; in the trajectory view, the green path is the ground truth.</p>
+    </div>
+
+    <div class="table-container" style="margin-top: 2.5rem">
+      <p class="table-caption">Reconstruction during occlusion (object-region crop, evaluation cameras)</p>
+      <table class="table is-narrow is-hoverable is-fullwidth">
+        <thead>
+          <tr><th rowspan="2">Method</th><th colspan="4" style="text-align:center">PSNR (dB), higher is better</th><th colspan="4" style="text-align:center">LPIPS, lower is better</th></tr>
+          <tr><th>Fall</th><th>Bounce</th><th>Roll</th><th>Mean</th><th>Fall</th><th>Bounce</th><th>Roll</th><th>Mean</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Ground-truth trajectory (upper bound)</td><td>16.08</td><td>18.33</td><td>17.60</td><td>17.34</td><td>.403</td><td>.203</td><td>.247</td><td>.284</td></tr>
+          <tr class="ours"><td>PersistGS</td><td>15.76</td><td>18.02</td><td>17.67</td><td>17.15</td><td>.405</td><td>.279</td><td>.257</td><td>.314</td></tr>
+          <tr><td>Linear interpolation*</td><td>11.98</td><td>17.75</td><td>17.50</td><td>15.74</td><td>.500</td><td>.339</td><td>.305</td><td>.381</td></tr>
+          <tr><td>Constant velocity</td><td>14.13</td><td>14.93</td><td>15.01</td><td>14.69</td><td>.555</td><td>.469</td><td>.450</td><td>.491</td></tr>
+          <tr><td>No physics</td><td>10.63</td><td>12.63</td><td>12.77</td><td>12.01</td><td>.761</td><td>.716</td><td>.669</td><td>.716</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="columns is-multiline">
+      <div class="column is-12">
+        <div class="table-container">
+          <p class="table-caption">Trajectory RMSE during occlusion, lower is better</p>
+          <table class="table is-narrow is-hoverable is-fullwidth">
+            <thead><tr><th>Method</th><th>Fall</th><th>Bounce</th><th>Roll</th><th>Mean</th></tr></thead>
+            <tbody>
+              <tr class="ours"><td>PersistGS</td><td>1.147</td><td>0.366</td><td>0.288</td><td>0.600</td></tr>
+              <tr><td>Linear interp.*</td><td>3.603</td><td>0.720</td><td>0.222</td><td>1.515</td></tr>
+              <tr><td>Constant velocity</td><td>8.936</td><td>5.716</td><td>1.427</td><td>5.360</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="column is-12">
+        <div class="table-container">
+          <p class="table-caption">Estimated physical parameters</p>
+          <table class="table is-narrow is-hoverable is-fullwidth">
+            <thead><tr><th>Scene</th><th>μ, true</th><th>Estimated</th><th>Error</th><th>v₀ (m/s), true</th><th>Estimated</th></tr></thead>
+            <tbody>
+              <tr><td>ball_fall</td><td>0.300</td><td>0.290</td><td>3.3%</td><td>(3, 0, 0)</td><td>(2.999, −0.007, −0.045)</td></tr>
+              <tr><td>ball_bounce</td><td>0.150</td><td>0.151</td><td>0.7%</td><td>(5, 0, 7)</td><td>(4.993, −0.094, 6.994)</td></tr>
+              <tr><td>ball_roll</td><td>0.400</td><td>0.363</td><td>9.3%</td><td>(10, 0, 0)</td><td>(9.527, 0.033, −0.218)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div class="content has-text-justified">
+      <p>Friction is recovered within 10% and initial velocity within 0.5 m/s on every component. In an ablation, the centroid silhouette loss gave 40% lower mean trajectory error than a masked pixel-wise loss (RMSE 0.586 against 0.984).</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <h2 class="title is-3 has-text-centered">Limitations</h2>
+    <div class="content has-text-justified">
+      <p>All scenes are synthetic and contain a single sphere. A sphere's silhouette does not change with rotation, so these experiments test the translational part of the centroid loss; the full SE(3) pipeline is implemented, but objects whose orientation changes their appearance are untested. Multi-object scenes with contact between objects, and removing the need for a known object segmentation, are future work. Parameters also have to be observable: on ball_bounce the first ground contact happens during occlusion, so friction cannot be estimated from the frames before it.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <div class="bibbox">
+      <button class="button is-small is-rounded copy" type="button">Copy</button>
+<pre><code>@InProceedings{ramlal2026persistgs,
+    author    = {Ramlal, Adrian and Zelek, John S.},
+    title     = {PersistGS: Differentiable Physics for Object Permanence in 4D Gaussian Splatting},
+    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR) Workshops},
+    month     = {June},
+    year      = {2026},
+    pages     = {4687-4696}
+}</code></pre>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link" href="https://openaccess.thecvf.com/content/CVPR2026W/GenRecon3d/papers/Ramlal_PersistGS_Differentiable_Physics_for_Object_Permanence_in_4D_Gaussian_Splatting_CVPRW_2026_paper.pdf" aria-label="Paper PDF"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></a>
+      &nbsp;
+      <a class="icon-link" href="https://adrian-ramlal.github.io/" aria-label="Adrian Ramlal's homepage"><svg viewBox="0 0 24 24" width="25" height="25" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content has-text-centered">
+          <p>This website is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International License</a>.</p>
+          <p>The source code of this website is borrowed from <a href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
